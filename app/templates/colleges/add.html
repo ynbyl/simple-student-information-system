@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Add College{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 500px;">
+  <h1 class="display-5">Add a College</h1>
+
+  {% if message %}
+  <div class="alert alert-danger">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="collegecode" class="form-label">College Code</label>
+      <input type="text" class="form-control" id="collegecode" name="collegecode" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="collegename" class="form-label">College Name</label>
+      <input type="text" class="form-control" id="collegename" name="collegename" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a href="{{ url_for('colleges.listColleges') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

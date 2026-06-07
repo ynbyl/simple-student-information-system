@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Update Course{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 500px;">
+  <h1 class="display-5">Update Course</h1>
+
+  {% if message %}
+  <div class="alert alert-danger">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST">
+    <!-- Course code is the PK — show as read-only -->
+    <div class="mb-3">
+      <label for="coursecode" class="form-label">Course Code</label>
+      <input type="text" class="form-control" id="coursecode" name="coursecode"
+             value="{{ course.coursecode }}" readonly>
+    </div>
+
+    <div class="mb-3">
+      <label for="coursename" class="form-label">Course Name</label>
+      <input type="text" class="form-control" id="coursename" name="coursename"
+             value="{{ course.coursename }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="collegecode" class="form-label">College</label>
+      <select class="form-select" id="collegecode" name="collegecode" required>
+        {% for college in colleges %}
+        <!-- Pre-select the college the course currently belongs to -->
+        <option value="{{ college.collegecode }}"
+          {% if college.collegecode == course.collegecode %}selected{% endif %}>
+          {{ college.collegename }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a href="{{ url_for('courses.listCourses') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}
