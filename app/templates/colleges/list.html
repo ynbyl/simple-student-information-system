@@ -119,8 +119,8 @@
 <script>
   function confirmDelete(url, name) {
     document.getElementById('deleteModalBody').innerHTML =
-      'Are you sure you want to delete the college <strong>' + name + '</strong>?<br><br>'
-      + '<span class="text-danger"><strong>⚠ Warning:</strong> All courses under this college and all students enrolled in those courses will also be deleted.</span>';
+      'Are you sure you want to delete the college <strong>' + name + '</strong>?<br>'
+      + '<span class="text-danger">This action cannot be undone.</span>';
     document.getElementById('confirmDeleteBtn').href = url;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
   }
