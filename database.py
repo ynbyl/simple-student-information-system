@@ -77,16 +77,11 @@ cursor = connection.cursor()
 
 # ── 10 Colleges ──────────────────────────────────────────────────────────────
 colleges = [
+    ("CASS", "College of Arts and Social Sciences"),
     ("CCS",  "College of Computer Studies"),
+    ("CSM",  "College of Science and Mathematics"),
     ("CED",  "College of Education"),
-    ("CBA",  "College of Business Administration"),
-    ("COE",  "College of Engineering"),
-    ("CON",  "College of Nursing"),
-    ("CAS",  "College of Arts and Sciences"),
-    ("CAF",  "College of Agriculture and Forestry"),
-    ("CCJ",  "College of Criminal Justice"),
-    ("CAR",  "College of Architecture"),
-    ("CPH",  "College of Public Health"),
+    ("CEBA", "College of Economics, Business and Accountancy"),
 ]
 cursor.executemany(
     "INSERT IGNORE INTO Colleges (collegecode, collegename) VALUES (%s, %s)",
@@ -95,46 +90,37 @@ cursor.executemany(
 
 # ── 30 Courses (3 per college) ────────────────────────────────────────────────
 courses = [
-    # CCS
-    ("BSCS",  "Bachelor of Science in Computer Science",              "CCS"),
-    ("BSIT",  "Bachelor of Science in Information Technology",        "CCS"),
-    ("BSIS",  "Bachelor of Science in Information Systems",           "CCS"),
-    # CED
-    ("BSED",  "Bachelor of Secondary Education",                      "CED"),
-    ("BEED",  "Bachelor of Elementary Education",                     "CED"),
-    ("BSPE",  "Bachelor of Physical Education",                       "CED"),
-    # CBA
-    ("BSBA",  "Bachelor of Science in Business Administration",       "CBA"),
-    ("BSA",   "Bachelor of Science in Accountancy",                   "CBA"),
-    ("BSEM",  "Bachelor of Science in Entrepreneurship Management",   "CBA"),
-    # COE
-    ("BSCE",  "Bachelor of Science in Civil Engineering",             "COE"),
-    ("BSEE",  "Bachelor of Science in Electrical Engineering",        "COE"),
-    ("BSME",  "Bachelor of Science in Mechanical Engineering",        "COE"),
-    # CON
-    ("BSN",   "Bachelor of Science in Nursing",                       "CON"),
-    ("BSMID", "Bachelor of Science in Midwifery",                     "CON"),
-    ("BSMT",  "Bachelor of Science in Medical Technology",            "CON"),
-    # CAS
-    ("BSPS",  "Bachelor of Science in Psychology",                    "CAS"),
-    ("ABSOC", "Bachelor of Arts in Sociology",                        "CAS"),
-    ("ABCOM", "Bachelor of Arts in Communication",                    "CAS"),
-    # CAF
-    ("BSAG",  "Bachelor of Science in Agriculture",                   "CAF"),
-    ("BSFOR", "Bachelor of Science in Forestry",                      "CAF"),
-    ("BSFT",  "Bachelor of Science in Food Technology",               "CAF"),
-    # CCJ
-    ("BSCRIM","Bachelor of Science in Criminology",                   "CCJ"),
-    ("BSFS",  "Bachelor of Science in Forensic Science",              "CCJ"),
-    ("BSLS",  "Bachelor of Science in Legal Studies",                 "CCJ"),
-    # CAR
-    ("BSAR",  "Bachelor of Science in Architecture",                  "CAR"),
-    ("BSID",  "Bachelor of Science in Interior Design",               "CAR"),
-    ("BSFAD", "Bachelor of Fine Arts and Design",                     "CAR"),
-    # CPH
-    ("BSPH",  "Bachelor of Science in Public Health",                 "CPH"),
-    ("BSND",  "Bachelor of Science in Nutrition and Dietetics",       "CPH"),
-    ("BSRM",  "Bachelor of Science in Radiologic Technology",         "CPH"),
+    ("BAENG",  "Bachelor of Arts in English",                       "CASS"),
+    ("BAFIL",  "Bachelor of Arts in Filipino",                      "CASS"),
+    ("BAHIS",  "Bachelor of Arts in History",                       "CASS"),
+    ("BAPOL",  "Bachelor of Arts in Political Science",             "CASS"),
+    ("BSPSY",  "Bachelor of Science in Psychology",                 "CASS"),
+    ("BAPHI",  "Bachelor of Arts in Philosophy",                    "CASS"),
+
+    ("BSCS",   "Bachelor of Science in Computer Science",           "CCS"),
+    ("BSIT",   "Bachelor of Science in Information Technology",     "CCS"),
+    ("BSIS",   "Bachelor of Science in Information Systems",        "CCS"),
+    ("BSCA",   "Bachelor of Science in Computer Applications",      "CCS"),
+
+    ("BSBIO",  "Bachelor of Science in Biology",                    "CSM"),
+    ("BSCHEM", "Bachelor of Science in Chemistry",                  "CSM"),
+    ("BSMATH", "Bachelor of Science in Mathematics",                "CSM"),
+    ("BSPHY",  "Bachelor of Science in Physics",                    "CSM"),
+    ("BSSTAT", "Bachelor of Science in Statistics",                 "CSM"),
+
+    ("BSME",   "Bachelor of Science in Mathematics Education",      "CED"),
+    ("BSSE",   "Bachelor of Science in Science Education",          "CED"),
+    ("BSED",   "Bachelor of Secondary Education",                   "CED"),
+    ("BEED",   "Bachelor of Elementary Education",                  "CED"),
+    ("BTLED",  "Bachelor of Technology and Livelihood Education",   "CED"),
+    ("BPE",    "Bachelor of Physical Education",                    "CED"),
+
+    ("BSA",    "Bachelor of Science in Accountancy",                "CEBA"),
+    ("BSBA",   "Bachelor of Science in Business Administration",    "CEBA"),
+    ("BSECON", "Bachelor of Science in Economics",                  "CEBA"),
+    ("BSENT",  "Bachelor of Science in Entrepreneurship",           "CEBA"),
+    ("BSHM",   "Bachelor of Science in Hospitality Management",     "CEBA"),
+    ("BSMM",   "Bachelor of Science in Marketing Management",       "CEBA"),
 ]
 cursor.executemany(
     "INSERT IGNORE INTO Courses (coursecode, coursename, collegecode) VALUES (%s, %s, %s)",
