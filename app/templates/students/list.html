@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Student List{% endblock %}
+
+{% block content %}
+<h1 style="padding: 20px 0">Student List</h1>
+
+{% if message %}
+<div class="alert alert-danger">{{ message }}</div>
+{% endif %}
+
+<hr>
+<div class="text-center mb-3">
+  <a class="btn btn-primary" href="{{ url_for('students.addStudent') }}">Add Student</a>
+  <a class="btn btn-primary" href="{{ url_for('courses.addCourse') }}">Add Course</a>
+  <a class="btn btn-primary" href="{{ url_for('colleges.addCollege') }}">Add College</a>
+</div>
+<hr>
+
+<div class="container mb-3">
+  <form action="{{ url_for('students.search_students_route') }}" method="GET" class="input-group"
+        onsubmit="if(!this.querySelector('input[name=query]').value.trim()){window.location='{{ url_for('students.index') }}';return false;}">
+    <input
+      type="text"
+      class="form-control"
+      name="query"
+      placeholder="Search students…"
+      value="{{ search_query or '' }}"
+      aria-label="Search students"
+    >
+    <button class="btn btn-outline-secondary" type="submit">Search</button>
+  </form>
+</div>
+
+<table class="table table-hover align-middle">
+  <thead>
+    <tr class="table-active">
+      <th scope="col">Photo</th>
+      {% set cols = [('id','ID'), ('first_name','Name'), ('gender','Gender'), ('year_level','Year Level'), ('coursecode','Course')] %}
+      {% for col_key, col_label in cols %}
+      {% set next_order = 'desc' if (sort == col_key and order == 'asc') else 'asc' %}
+      <th scope="col">
+        <a href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ col_key }}&order={{ next_order }}&page=1"
+           class="text-decoration-none text-reset d-flex align-items-center gap-1">
+          {{ col_label }}
+          {% if sort == col_key %}
+            <span>{{ '▲' if order == 'asc' else '▼' }}</span>
+          {% else %}
+            <span class="text-muted opacity-50">⇅</span>
+          {% endif %}
+        </a>
+      </th>
+      {% endfor %}
+      <th scope="col" colspan="2"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for student in students %}
+    <tr>
+      <td>
+        <img
+          src="{{ student.photo_url or default_photo }}"
+          alt="Photo of {{ student.first_name }} {{ student.last_name }}"
+          width="48" height="48"
+          style="object-fit:cover; border-radius: {{ '50%' if student.photo_url else '8px' }};"
+        >
+      </td>
+      <td>{{ student.id }}</td>
+      <td>{{ student.first_name }} {{ student.last_name }}</td>
+      <td>{{ student.gender }}</td>
+      <td>{{ student.year_level }}</td>
+      <td>{{ student.coursecode }}</td>
+      <td>
+        <a class="btn btn-success btn-sm" href="{{ url_for('students.updateStudent', id=student.id) }}">Edit</a>
+      </td>
+      <td>
+        {# Delete button opens the confirmation modal, passing the student's info #}
+        <button
+          class="btn btn-danger btn-sm"
+          onclick="confirmDelete(
+            '{{ url_for('students.deleteStudent', id=student.id) }}',
+            '{{ student.first_name }} {{ student.last_name }}',
+            'student'
+          )"
+        >Delete</button>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="8" class="text-center text-muted">No students found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{# ── Pagination ───────────────────────────────────────────────────────────── #}
+{% if total_pages > 1 %}
+<nav aria-label="Student list pagination">
+  <ul class="pagination justify-content-center">
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page - 1 }}">Previous</a>
+    </li>
+    {% for p in range(1, total_pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page + 1 }}">Next</a>
+    </li>
+  </ul>
+</nav>
+<p class="text-center text-muted small">Showing page {{ page }} of {{ total_pages }} ({{ total }} total students)</p>
+{% endif %}
+
+{# ── Confirmation Modal ───────────────────────────────────────────────────── #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-danger">
+        <h5 class="modal-title text-danger" id="deleteModalLabel">⚠ Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="deleteModalBody">
+        Are you sure you want to delete this record? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a id="confirmDeleteBtn" href="#" class="btn btn-danger">Yes, Delete</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(url, name, type) {
+    document.getElementById('deleteModalBody').innerHTML =
+      'Are you sure you want to delete the ' + type + ' <strong>' + name + '</strong>?<br>'
+      + '<span class="text-danger">This action cannot be undone.</span>';
+    document.getElementById('confirmDeleteBtn').href = url;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+  }
+</script>
+{% endblock %}

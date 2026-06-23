@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Update Student{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 500px;">
+  <h1 class="display-5">Update Student</h1>
+
+  {% if message %}
+  <div class="alert alert-danger">{{ message }}</div>
+  {% endif %}
+
+  {# enctype is needed so the file upload works #}
+  <form method="POST" enctype="multipart/form-data">
+
+    {# current photo shows at the top, click it to change #}
+    <div class="mb-4 text-center">
+      <img id="photo-preview"
+        src="{{ student.photo_url or default_photo }}"
+        alt="Current photo"
+        width="100" height="100"
+        style="object-fit:cover; border-radius:50%; border:2px solid #555; cursor:pointer;"
+        onclick="document.getElementById('photo').click()"
+      >
+      <div class="mt-2">
+        <label for="photo" class="form-label">
+          Upload New Photo <span class="text-muted">(leave blank to keep current)</span>
+        </label>
+        <input type="file" class="form-control" id="photo" name="photo" accept="image/*"
+               onchange="previewPhoto(event)">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="id" class="form-label">ID</label>
+      <input type="text" class="form-control" id="id" name="id" value="{{ student.id }}" readonly>
+    </div>
+
+    <div class="mb-3">
+      <label for="first_name" class="form-label">First Name</label>
+      <input type="text" class="form-control" id="first_name" name="first_name"
+             value="{{ student.first_name }}"
+             pattern="[^\d]+" title="First name must not contain numbers" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="last_name" class="form-label">Last Name</label>
+      <input type="text" class="form-control" id="last_name" name="last_name"
+             value="{{ student.last_name }}"
+             pattern="[^\d]+" title="Last name must not contain numbers" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="year_level" class="form-label">Year Level</label>
+      <select class="form-select" id="year_level" name="year_level" required>
+        {% for yr in [1, 2, 3, 4] %}
+        <option value="{{ yr }}" {% if student.year_level == yr %}selected{% endif %}>{{ yr }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="gender" class="form-label">Gender</label>
+      <select class="form-select" id="gender" name="gender" required>
+        <option value="Male"   {% if student.gender == "Male"   %}selected{% endif %}>Male</option>
+        <option value="Female" {% if student.gender == "Female" %}selected{% endif %}>Female</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="coursecode" class="form-label">Course</label>
+      <select class="form-select" id="coursecode" name="coursecode" required>
+        {% for course in courses %}
+        <option value="{{ course.coursecode }}"
+          {% if course.coursecode == student.coursecode %}selected{% endif %}>
+          {{ course.coursecode }} — {{ course.coursename }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a href="{{ url_for('students.index') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+
+  <script>
+    // Live preview — shows the chosen image before uploading
+    function previewPhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('photo-preview').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Block digit keypresses in name fields
+    ['first_name', 'last_name'].forEach(function(fieldId) {
+      document.getElementById(fieldId).addEventListener('keypress', function(e) {
+        if (/\d/.test(e.key)) e.preventDefault();
+      });
+    });
+  </script>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Course List{% endblock %}
+
+{% block content %}
+<h1 style="padding: 20px 0">Course List</h1>
+
+{% if message %}
+<div class="alert alert-danger">{{ message }}</div>
+{% endif %}
+
+<hr>
+<div class="text-center mb-3">
+  <a class="btn btn-primary" href="{{ url_for('courses.addCourse') }}">Add Course</a>
+</div>
+<hr>
+
+<div class="container mb-3">
+  <form action="{{ url_for('courses.search_courses_route') }}" method="GET" class="input-group"
+        onsubmit="if(!this.querySelector('input[name=query]').value.trim()){window.location='{{ url_for('courses.listCourses') }}';return false;}">
+    <input
+      type="text"
+      class="form-control"
+      name="query"
+      placeholder="Search courses…"
+      value="{{ search_query or '' }}"
+      aria-label="Search courses"
+    >
+    <button class="btn btn-outline-secondary" type="submit">Search</button>
+  </form>
+</div>
+
+<table class="table table-hover">
+  <thead>
+    <tr class="table-active">
+      {% set cols = [('coursecode','Course Code'), ('coursename','Name'), ('collegecode','College')] %}
+      {% for col_key, col_label in cols %}
+      {% set next_order = 'desc' if (sort == col_key and order == 'asc') else 'asc' %}
+      <th scope="col">
+        <a href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ col_key }}&order={{ next_order }}&page=1"
+           class="text-decoration-none text-reset d-flex align-items-center gap-1">
+          {{ col_label }}
+          {% if sort == col_key %}
+            <span>{{ '▲' if order == 'asc' else '▼' }}</span>
+          {% else %}
+            <span class="text-muted opacity-50">⇅</span>
+          {% endif %}
+        </a>
+      </th>
+      {% endfor %}
+      <th scope="col" colspan="2"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for course in courses %}
+    <tr>
+      <td>{{ course.coursecode }}</td>
+      <td>{{ course.coursename }}</td>
+      <td>{{ course.collegename or course.collegecode }}</td>
+      <td>
+        <a class="btn btn-success btn-sm" href="{{ url_for('courses.updateCourse', coursecode=course.coursecode) }}">Edit</a>
+      </td>
+      <td>
+        <button
+          class="btn btn-danger btn-sm"
+          onclick="confirmDelete(
+            '{{ url_for('courses.deleteCourse', coursecode=course.coursecode) }}',
+            '{{ course.coursecode }} — {{ course.coursename }}'
+          )"
+        >Delete</button>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5" class="text-center text-muted">No courses found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{# ── Pagination ───────────────────────────────────────────────────────────── #}
+{% if total_pages > 1 %}
+<nav aria-label="Course list pagination">
+  <ul class="pagination justify-content-center">
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page - 1 }}">Previous</a>
+    </li>
+    {% for p in range(1, total_pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page + 1 }}">Next</a>
+    </li>
+  </ul>
+</nav>
+<p class="text-center text-muted small">Showing page {{ page }} of {{ total_pages }} ({{ total }} total courses)</p>
+{% endif %}
+
+{# ── Confirmation Modal ───────────────────────────────────────────────────── #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-danger">
+        <h5 class="modal-title text-danger" id="deleteModalLabel">⚠ Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="deleteModalBody">
+        Are you sure you want to delete this record? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a id="confirmDeleteBtn" href="#" class="btn btn-danger">Yes, Delete</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(url, name) {
+    document.getElementById('deleteModalBody').innerHTML =
+      'Are you sure you want to delete the course <strong>' + name + '</strong>?<br><br>'
+      + '<span class="text-danger"><strong>⚠ Warning:</strong> All students currently enrolled in this course will also be deleted.</span>';
+    document.getElementById('confirmDeleteBtn').href = url;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+  }
+</script>
+{% endblock %}
