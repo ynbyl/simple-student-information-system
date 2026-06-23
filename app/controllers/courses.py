@@ -12,6 +12,7 @@ from app.models import (
     delete_course,
     search_courses,
     get_all_colleges,
+    course_has_students,
 )
 from app.forms import validate_course_form
 
@@ -110,7 +111,12 @@ def updateCourse(coursecode):
 
 @courses_bp.route("/deleteCourse/<string:coursecode>")
 def deleteCourse(coursecode):
-    # delete a course and all students under it will also be deleted
+    # block delete if students are still enrolled in this course
+    if course_has_students(coursecode):
+        return redirect(url_for(
+            "courses.listCourses",
+            message=f"Cannot delete course '{coursecode}' — there are students enrolled in it. Remove or reassign them first."
+        ))
     delete_course(coursecode)
     return redirect(url_for("courses.listCourses"))
 

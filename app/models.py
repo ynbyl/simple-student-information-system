@@ -235,12 +235,22 @@ def update_course(coursecode, coursename, collegecode):
 
 
 def delete_course(coursecode):
-    # delete a course, students under it will also be deleted (cascade)
+    # delete a course only if no students are enrolled in it
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM Courses WHERE coursecode=%s", (coursecode,))
     conn.commit()
     conn.close()
+
+
+def course_has_students(coursecode):
+    # check if any students are enrolled in this course
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM Students WHERE coursecode=%s", (coursecode,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count > 0
 
 
 def search_courses(query):
@@ -325,12 +335,22 @@ def update_college(collegecode, collegename):
 
 
 def delete_college(collegecode):
-    # delete a college, its courses and students will also be deleted (cascade)
+    # delete a college only if it has no courses under it
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM Colleges WHERE collegecode=%s", (collegecode,))
     conn.commit()
     conn.close()
+
+
+def college_has_courses(collegecode):
+    # check if any courses belong to this college
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM Courses WHERE collegecode=%s", (collegecode,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count > 0
 
 
 def search_colleges(query):

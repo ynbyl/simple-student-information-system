@@ -11,6 +11,7 @@ from app.models import (
     update_college,
     delete_college,
     search_colleges,
+    college_has_courses,
 )
 from app.forms import validate_college_form
 
@@ -103,7 +104,12 @@ def updateCollege(collegecode):
 
 @colleges_bp.route("/deleteCollege/<string:collegecode>")
 def deleteCollege(collegecode):
-    # delete a college, its courses and students will also get deleted
+    # block delete if this college still has courses under it
+    if college_has_courses(collegecode):
+        return redirect(url_for(
+            "colleges.listColleges",
+            message=f"Cannot delete college '{collegecode}' — it still has courses assigned to it. Remove or reassign those courses first."
+        ))
     delete_college(collegecode)
     return redirect(url_for("colleges.listColleges"))
 
