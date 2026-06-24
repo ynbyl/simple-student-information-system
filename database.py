@@ -82,6 +82,7 @@ colleges = [
     ("CSM",  "College of Science and Mathematics"),
     ("CED",  "College of Education"),
     ("CEBA", "College of Economics, Business and Accountancy"),
+    ("COE", "College of Engineering"),
 ]
 cursor.executemany(
     "INSERT IGNORE INTO Colleges (collegecode, collegename) VALUES (%s, %s)",
@@ -108,7 +109,6 @@ courses = [
     ("BSPHY",  "Bachelor of Science in Physics",                    "CSM"),
     ("BSSTAT", "Bachelor of Science in Statistics",                 "CSM"),
 
-    ("BSME",   "Bachelor of Science in Mathematics Education",      "CED"),
     ("BSSE",   "Bachelor of Science in Science Education",          "CED"),
     ("BSED",   "Bachelor of Secondary Education",                   "CED"),
     ("BEED",   "Bachelor of Elementary Education",                  "CED"),
@@ -121,33 +121,49 @@ courses = [
     ("BSENT",  "Bachelor of Science in Entrepreneurship",           "CEBA"),
     ("BSHM",   "Bachelor of Science in Hospitality Management",     "CEBA"),
     ("BSMM",   "Bachelor of Science in Marketing Management",       "CEBA"),
+
+    ("BSCE",  "Bachelor of Science in Civil Engineering",           "COE"),
+    ("BSCpE", "Bachelor of Science in Computer Engineering",        "COE"),
+    ("BSEE",  "Bachelor of Science in Electrical Engineering",      "COE"),
+    ("BSECE", "Bachelor of Science in Electronics Engineering",     "COE"),
+    ("BSME",  "Bachelor of Science in Mechanical Engineering",      "COE"),
 ]
 cursor.executemany(
     "INSERT IGNORE INTO Courses (coursecode, coursename, collegecode) VALUES (%s, %s, %s)",
     courses,
 )
 
-# ── 300 Students ─────────────────────────────────────────────────────────────
 first_names_male = [
-    "Juan", "Pedro", "Carlos", "Miguel", "Andres", "Ramon", "Jose", "Luis",
-    "Mario", "Eduardo", "Roberto", "Antonio", "Francisco", "Manuel", "Diego",
-    "Gabriel", "Rafael", "Daniel", "Marco", "Paolo", "Liam", "Ethan", "Nathan",
-    "Kevin", "Aaron", "Bryan", "Christian", "Jerome", "Kenneth", "Leonard",
+    "John", "Joshua", "Christian", "Mark", "John Mark", "Jerome",
+    "Jayson", "Ryan", "Kevin", "Kenneth", "Bryan", "Michael",
+    "Daniel", "Adrian", "Nathan", "Paolo", "Carlo", "Juan Carlo",
+    "John Paul", "Prince", "Patrick", "Renz", "Carl", "Angelo",
+    "Gabriel", "Sean", "Ethan", "Kyle", "Jomar", "Ralph",
+    "James", "Reymart", "Jerico", "Von", "Ace", "Cedric",
+    "Lester", "Jude", "Miguel", "Vincent"
 ]
+
 first_names_female = [
-    "Maria", "Ana", "Lucia", "Sofia", "Isabella", "Gabriela", "Rosa", "Elena",
-    "Carmen", "Teresa", "Patricia", "Monica", "Sandra", "Angela", "Cristina",
-    "Diana", "Laura", "Claudia", "Vanessa", "Maricel", "Hannah", "Nicole",
-    "Jasmine", "Camille", "Tricia", "Abigail", "Rachelle", "Joanna", "Melissa",
-    "Stephanie",
+    "Mary Grace", "Angel", "Angela", "Joy", "Rose", "Mae",
+    "Princess", "Janelle", "Nicole", "Hannah", "Patricia", "Kimberly",
+    "Camille", "Abigail", "Jasmine", "Christine", "Kristine", "Jenny",
+    "Joanna", "Alyssa", "Andrea", "Samantha", "Kate", "Bianca",
+    "Faith", "Rica", "Mika", "Trisha", "Rachelle", "Mae Ann",
+    "Charlene", "Marielle", "Frances", "Danica", "Sheena", "Katrina",
+    "Ella", "Sophia", "Maria", "Angelica"
 ]
+
 last_names = [
-    "Dela Cruz", "Santos", "Reyes", "Garcia", "Lopez", "Mendoza", "Torres",
-    "Ramos", "Flores", "Cruz", "Aquino", "Villanueva", "Bautista", "Castillo",
-    "Morales", "Gonzalez", "Hernandez", "Perez", "Ramirez", "Fernandez",
-    "Rivera", "Navarro", "Soriano", "Pascual", "Aguilar", "Velasco", "Espinosa",
-    "Lim", "Tan", "Ong", "Sy", "Go", "Chan", "Domingo", "Macapagal",
-    "Bonifacio", "Rizal", "Mabini", "Luna", "Ocampo",
+    "Dela Cruz", "Santos", "Reyes", "Garcia", "Mendoza",
+    "Torres", "Ramos", "Flores", "Aquino", "Bautista",
+    "Castillo", "Morales", "Perez", "Fernandez", "Rivera",
+    "Navarro", "Soriano", "Pascual", "Aguilar", "Velasco",
+    "Lim", "Tan", "Ong", "Sy", "Go",
+    "Uy", "Chua", "Yu", "Co", "Kho",
+    "Villanueva", "Domingo", "Salazar", "Mercado", "Tolentino",
+    "Alvarez", "Manalo", "Panganiban", "Valdez", "David",
+    "Abad", "Rosales", "Lao", "Macapagal", "Luna",
+    "Bonifacio", "Rizal", "Mabini", "Ocampo", "Cortez"
 ]
 
 course_codes = [c[0] for c in courses]
@@ -157,9 +173,9 @@ used_ids = set()
 
 random.seed(42)  # fixed seed so the data is consistent every run
 
-for i in range(300):
+for i in range(1500):
     # generate a unique YYYY-NNNN id
-    year = random.randint(2019, 2024)
+    year = random.randint(2021, 2025)
     while True:
         seq = random.randint(1, 9999)
         sid = f"{year}-{seq:04d}"
