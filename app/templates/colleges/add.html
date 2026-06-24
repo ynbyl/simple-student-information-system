@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
 {% block title %}Add College{% endblock %}
 
@@ -13,16 +13,27 @@
   <form method="POST">
     <div class="mb-3">
       <label for="collegecode" class="form-label">College Code</label>
-      <input type="text" class="form-control" id="collegecode" name="collegecode" required>
+      <input type="text" class="form-control" id="collegecode" name="collegecode"
+             pattern="[^\d]+" title="College code must not contain numbers"
+             placeholder="e.g. CCS" required>
     </div>
 
     <div class="mb-3">
       <label for="collegename" class="form-label">College Name</label>
-      <input type="text" class="form-control" id="collegename" name="collegename" required>
+      <input type="text" class="form-control" id="collegename" name="collegename"
+             pattern="[^\d]+" title="College name must not contain numbers" required>
     </div>
 
     <button type="submit" class="btn btn-primary">Create</button>
     <a href="{{ url_for('colleges.listColleges') }}" class="btn btn-secondary">Cancel</a>
   </form>
+
+  <script>
+    ['collegecode', 'collegename'].forEach(function(fieldId) {
+      document.getElementById(fieldId).addEventListener('keypress', function(e) {
+        if (/\d/.test(e.key)) e.preventDefault();
+      });
+    });
+  </script>
 </div>
 {% endblock %}

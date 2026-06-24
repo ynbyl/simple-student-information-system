@@ -5,9 +5,64 @@ import os
 
 import mysql.connector
 from dotenv import load_dotenv
+from flask_login import UserMixin
+from flask_bcrypt import Bcrypt
 
 # load .env so we get the db credentials
 load_dotenv(override=True)
+
+bcrypt = Bcrypt()
+
+
+# ---- User model for flask-login ----
+
+class User(UserMixin):
+    def __init__(self, id, username, password_hash):
+        self.id            = id
+        self.username      = username
+        self.password_hash = password_hash
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
+
+
+def get_user_by_id(user_id):
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, password FROM Users WHERE id=%s", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return User(*row) if row else None
+
+
+def get_user_by_username(username):
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, password FROM Users WHERE username=%s", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    return User(*row) if row else None
+
+
+def username_exists(username):
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM Users WHERE username=%s", (username,))
+    exists = cursor.fetchone() is not None
+    conn.close()
+    return exists
+
+
+def create_user(username, password):
+    hashed = bcrypt.generate_password_hash(password).decode("utf-8")
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO Users (username, password) VALUES (%s, %s)",
+        (username, hashed),
+    )
+    conn.commit()
+    conn.close()
 
 
 # helper to connect to the database
@@ -235,12 +290,22 @@ def update_course(coursecode, coursename, collegecode):
 
 
 def delete_course(coursecode):
-    # delete a course, students under it will also be deleted (cascade)
+    # delete a course only if no students are enrolled in it
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM Courses WHERE coursecode=%s", (coursecode,))
     conn.commit()
     conn.close()
+
+
+def course_has_students(coursecode):
+    # check if any students are enrolled in this course
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM Students WHERE coursecode=%s", (coursecode,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count > 0
 
 
 def search_courses(query):
@@ -325,12 +390,22 @@ def update_college(collegecode, collegename):
 
 
 def delete_college(collegecode):
-    # delete a college, its courses and students will also be deleted (cascade)
+    # delete a college only if it has no courses under it
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM Colleges WHERE collegecode=%s", (collegecode,))
     conn.commit()
     conn.close()
+
+
+def college_has_courses(collegecode):
+    # check if any courses belong to this college
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM Courses WHERE collegecode=%s", (collegecode,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count > 0
 
 
 def search_colleges(query):

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
 {% block title %}Student List{% endblock %}
 
@@ -18,15 +18,10 @@
 <hr>
 
 <div class="container mb-3">
-  <form action="{{ url_for('students.search_students_route') }}" method="GET" class="input-group">
-    <input
-      type="text"
-      class="form-control"
-      name="query"
-      placeholder="Search students…"
-      value="{{ search_query or '' }}"
-      aria-label="Search students"
-    >
+  <form action="{{ url_for('students.search_students_route') }}" method="GET" class="input-group"
+        onsubmit="if(!this.querySelector('input[name=query]').value.trim()){window.location='{{ url_for('students.index') }}';return false;}">
+    <input type="text" class="form-control" name="query"
+           placeholder="Search students…" value="{{ search_query or '' }}" aria-label="Search students">
     <button class="btn btn-outline-secondary" type="submit">Search</button>
   </form>
 </div>
@@ -35,11 +30,21 @@
   <thead>
     <tr class="table-active">
       <th scope="col">Photo</th>
-      <th scope="col">ID</th>
-      <th scope="col">Name</th>
-      <th scope="col">Gender</th>
-      <th scope="col">Year Level</th>
-      <th scope="col">Course</th>
+      {% set cols = [('id','ID'),('first_name','Name'),('gender','Gender'),('year_level','Year Level'),('coursecode','Course')] %}
+      {% for col_key, col_label in cols %}
+      {% set next_order = 'desc' if (sort == col_key and order == 'asc') else 'asc' %}
+      <th scope="col">
+        <a href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ col_key }}&order={{ next_order }}&page=1"
+           class="text-decoration-none text-reset d-flex align-items-center gap-1">
+          {{ col_label }}
+          {% if sort == col_key %}
+            <span>{{ '▲' if order == 'asc' else '▼' }}</span>
+          {% else %}
+            <span class="text-muted opacity-50">⇅</span>
+          {% endif %}
+        </a>
+      </th>
+      {% endfor %}
       <th scope="col" colspan="2"></th>
     </tr>
   </thead>
@@ -47,40 +52,70 @@
     {% for student in students %}
     <tr>
       <td>
-        <img
-          src="{{ student.photo_url or default_photo }}"
-          alt="Photo of {{ student.first_name }} {{ student.last_name }}"
-          width="48" height="48"
-          style="object-fit:cover; border-radius: {{ '50%' if student.photo_url else '8px' }};"
-        >
+        <img src="{{ student.photo_url or default_photo }}"
+             alt="Photo of {{ student.first_name }} {{ student.last_name }}"
+             width="48" height="48"
+             style="object-fit:cover; border-radius: {{ '50%' if student.photo_url else '8px' }};">
       </td>
       <td>{{ student.id }}</td>
       <td>{{ student.first_name }} {{ student.last_name }}</td>
       <td>{{ student.gender }}</td>
       <td>{{ student.year_level }}</td>
       <td>{{ student.coursecode }}</td>
+      <td><a class="btn btn-success btn-sm" href="{{ url_for('students.updateStudent', id=student.id) }}">Edit</a></td>
       <td>
-        <a class="btn btn-success btn-sm" href="{{ url_for('students.updateStudent', id=student.id) }}">Edit</a>
-      </td>
-      <td>
-        {# Delete button opens the confirmation modal, passing the student's info #}
-        <button
-          class="btn btn-danger btn-sm"
-          onclick="confirmDelete(
-            '{{ url_for('students.deleteStudent', id=student.id) }}',
-            '{{ student.first_name }} {{ student.last_name }}',
-            'student'
-          )"
+        <button class="btn btn-danger btn-sm"
+          onclick="confirmDelete('{{ url_for('students.deleteStudent', id=student.id) }}','{{ student.first_name }} {{ student.last_name }}','student')"
         >Delete</button>
       </td>
     </tr>
     {% else %}
-    <tr>
-      <td colspan="8" class="text-center text-muted">No students found.</td>
-    </tr>
+    <tr><td colspan="8" class="text-center text-muted">No students found.</td></tr>
     {% endfor %}
   </tbody>
 </table>
+
+{# ── Pagination ───────────────────────────────────────────────────────────── #}
+{% if total_pages > 1 %}
+<nav aria-label="Student list pagination">
+  <ul class="pagination justify-content-center flex-wrap">
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page - 1 }}">Previous</a>
+    </li>
+    {% for p in range(1, [4, total_pages + 1]|min) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+    {% if page > 6 %}
+    <li class="page-item disabled"><span class="page-link">…</span></li>
+    {% endif %}
+    {% for p in range([page - 2, 4]|max, [page + 3, total_pages - 2]|min) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+    {% if page < total_pages - 5 %}
+    <li class="page-item disabled"><span class="page-link">…</span></li>
+    {% endif %}
+    {% for p in range([total_pages - 2, 4]|max, total_pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page + 1 }}">Next</a>
+    </li>
+  </ul>
+</nav>
+<div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+  <span class="text-muted small">Go to page:</span>
+  <input type="number" id="gotoPageStudents" class="form-control form-control-sm" min="1" max="{{ total_pages }}" style="width:70px;" placeholder="{{ page }}">
+  <button class="btn btn-sm btn-outline-secondary"
+    onclick="(function(){var p=parseInt(document.getElementById('gotoPageStudents').value);if(p>=1&&p<={{ total_pages }}){window.location='?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page='+p;}})()">Go</button>
+</div>
+<p class="text-center text-muted small">Page {{ page }} of {{ total_pages }} ({{ total }} total students)</p>
+{% endif %}
 
 {# ── Confirmation Modal ───────────────────────────────────────────────────── #}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -90,9 +125,7 @@
         <h5 class="modal-title text-danger" id="deleteModalLabel">⚠ Confirm Delete</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="deleteModalBody">
-        Are you sure you want to delete this record? This action cannot be undone.
-      </div>
+      <div class="modal-body" id="deleteModalBody">Are you sure you want to delete this record? This action cannot be undone.</div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <a id="confirmDeleteBtn" href="#" class="btn btn-danger">Yes, Delete</a>

@@ -68,30 +68,3 @@ CREATE INDEX idx_courses_college ON Courses  (collegecode);
 CREATE INDEX idx_students_last   ON Students (last_name);
 CREATE INDEX idx_students_first  ON Students (first_name);
 CREATE INDEX idx_students_course ON Students (coursecode);
-
--- sample data for testing
-INSERT INTO Colleges VALUES
-    ('CCS', 'College of Computer Studies'),
-    ('CED', 'College of Education'),
-    ('CBA', 'College of Business Administration'),
-    ('COE', 'College of Engineering'),
-    ('CON', 'College of Nursing');
-
-INSERT INTO Courses VALUES
-    ('BSCS', 'Bachelor of Science in Computer Science',       'CCS'),
-    ('BSIT', 'Bachelor of Science in Information Technology', 'CCS'),
-    ('BSIS', 'Bachelor of Science in Information Systems',    'CCS'),
-    ('BSED', 'Bachelor of Science in Education',              'CED'),
-    ('BEED', 'Bachelor of Elementary Education',              'CED'),
-    ('BSBA', 'Bachelor of Science in Business Administration','CBA'),
-    ('BSA',  'Bachelor of Science in Accountancy',            'CBA'),
-    ('BSCE', 'Bachelor of Science in Civil Engineering',      'COE'),
-    ('BSEE', 'Bachelor of Science in Electrical Engineering', 'COE'),
-    ('BSN',  'Bachelor of Science in Nursing',                'CON');
-
-INSERT INTO Students VALUES
-    ('2023-0001', 'Juan',   'Dela Cruz', 1, 'Male',   'BSCS', NULL),
-    ('2023-0002', 'Maria',  'Santos',    2, 'Female', 'BSIT', NULL),
-    ('2023-0003', 'Pedro',  'Reyes',     3, 'Male',   'BSBA', NULL),
-    ('2023-0004', 'Ana',    'Garcia',    1, 'Female', 'BSN',  NULL),
-    ('2023-0005', 'Carlos', 'Lopez',     4, 'Male',   'BSCE', NULL);

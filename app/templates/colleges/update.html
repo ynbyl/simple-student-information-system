@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
 {% block title %}Update College{% endblock %}
 
@@ -11,7 +11,6 @@
   {% endif %}
 
   <form method="POST">
-    <!-- College code is the PK — show as read-only -->
     <div class="mb-3">
       <label for="collegecode" class="form-label">College Code</label>
       <input type="text" class="form-control" id="collegecode" name="collegecode"
@@ -21,11 +20,18 @@
     <div class="mb-3">
       <label for="collegename" class="form-label">College Name</label>
       <input type="text" class="form-control" id="collegename" name="collegename"
-             value="{{ college.collegename }}" required>
+             value="{{ college.collegename }}"
+             pattern="[^\d]+" title="College name must not contain numbers" required>
     </div>
 
     <button type="submit" class="btn btn-primary">Update</button>
     <a href="{{ url_for('colleges.listColleges') }}" class="btn btn-secondary">Cancel</a>
   </form>
+
+  <script>
+    document.getElementById('collegename').addEventListener('keypress', function(e) {
+      if (/\d/.test(e.key)) e.preventDefault();
+    });
+  </script>
 </div>
 {% endblock %}

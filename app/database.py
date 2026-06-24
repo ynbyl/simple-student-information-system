@@ -1,6 +1,6 @@
 # this script creates the database and tables
 # run this first before running the app
-# python database.py
+# python app/database.py
 
 import os
 import random
@@ -28,6 +28,17 @@ cursor.execute(f"USE {DATABASE_NAME}")
 cursor.execute("DROP TABLE IF EXISTS Students")
 cursor.execute("DROP TABLE IF EXISTS Courses")
 cursor.execute("DROP TABLE IF EXISTS Colleges")
+cursor.execute("DROP TABLE IF EXISTS Users")
+
+cursor.execute(
+    """
+    CREATE TABLE Users (
+        id       INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(150) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL
+    )
+    """
+)
 
 cursor.execute(
     """
@@ -75,21 +86,21 @@ print(f"Database '{DATABASE_NAME}' and tables created successfully.")
 connection = mysql.connector.connect(**{**db_config, "database": DATABASE_NAME})
 cursor = connection.cursor()
 
-# ── 10 Colleges ──────────────────────────────────────────────────────────────
+# ── Colleges ─────────────────────────────────────────────────────────────────
 colleges = [
     ("CASS", "College of Arts and Social Sciences"),
     ("CCS",  "College of Computer Studies"),
     ("CSM",  "College of Science and Mathematics"),
     ("CED",  "College of Education"),
     ("CEBA", "College of Economics, Business and Accountancy"),
-    ("COE", "College of Engineering"),
+    ("COE",  "College of Engineering"),
 ]
 cursor.executemany(
     "INSERT IGNORE INTO Colleges (collegecode, collegename) VALUES (%s, %s)",
     colleges,
 )
 
-# ── 30 Courses (3 per college) ────────────────────────────────────────────────
+# ── Courses ───────────────────────────────────────────────────────────────────
 courses = [
     ("BAENG",  "Bachelor of Arts in English",                       "CASS"),
     ("BAFIL",  "Bachelor of Arts in Filipino",                      "CASS"),
@@ -97,42 +108,38 @@ courses = [
     ("BAPOL",  "Bachelor of Arts in Political Science",             "CASS"),
     ("BSPSY",  "Bachelor of Science in Psychology",                 "CASS"),
     ("BAPHI",  "Bachelor of Arts in Philosophy",                    "CASS"),
-
     ("BSCS",   "Bachelor of Science in Computer Science",           "CCS"),
     ("BSIT",   "Bachelor of Science in Information Technology",     "CCS"),
     ("BSIS",   "Bachelor of Science in Information Systems",        "CCS"),
     ("BSCA",   "Bachelor of Science in Computer Applications",      "CCS"),
-
     ("BSBIO",  "Bachelor of Science in Biology",                    "CSM"),
     ("BSCHEM", "Bachelor of Science in Chemistry",                  "CSM"),
     ("BSMATH", "Bachelor of Science in Mathematics",                "CSM"),
     ("BSPHY",  "Bachelor of Science in Physics",                    "CSM"),
     ("BSSTAT", "Bachelor of Science in Statistics",                 "CSM"),
-
     ("BSSE",   "Bachelor of Science in Science Education",          "CED"),
     ("BSED",   "Bachelor of Secondary Education",                   "CED"),
     ("BEED",   "Bachelor of Elementary Education",                  "CED"),
     ("BTLED",  "Bachelor of Technology and Livelihood Education",   "CED"),
     ("BPE",    "Bachelor of Physical Education",                    "CED"),
-
     ("BSA",    "Bachelor of Science in Accountancy",                "CEBA"),
     ("BSBA",   "Bachelor of Science in Business Administration",    "CEBA"),
     ("BSECON", "Bachelor of Science in Economics",                  "CEBA"),
     ("BSENT",  "Bachelor of Science in Entrepreneurship",           "CEBA"),
     ("BSHM",   "Bachelor of Science in Hospitality Management",     "CEBA"),
     ("BSMM",   "Bachelor of Science in Marketing Management",       "CEBA"),
-
-    ("BSCE",  "Bachelor of Science in Civil Engineering",           "COE"),
-    ("BSCpE", "Bachelor of Science in Computer Engineering",        "COE"),
-    ("BSEE",  "Bachelor of Science in Electrical Engineering",      "COE"),
-    ("BSECE", "Bachelor of Science in Electronics Engineering",     "COE"),
-    ("BSME",  "Bachelor of Science in Mechanical Engineering",      "COE"),
+    ("BSCE",   "Bachelor of Science in Civil Engineering",          "COE"),
+    ("BSCpE",  "Bachelor of Science in Computer Engineering",       "COE"),
+    ("BSEE",   "Bachelor of Science in Electrical Engineering",     "COE"),
+    ("BSECE",  "Bachelor of Science in Electronics Engineering",    "COE"),
+    ("BSME",   "Bachelor of Science in Mechanical Engineering",     "COE"),
 ]
 cursor.executemany(
     "INSERT IGNORE INTO Courses (coursecode, coursename, collegecode) VALUES (%s, %s, %s)",
     courses,
 )
 
+# ── Students ──────────────────────────────────────────────────────────────────
 first_names_male = [
     "John", "Joshua", "Christian", "Mark", "John Mark", "Jerome",
     "Jayson", "Ryan", "Kevin", "Kenneth", "Bryan", "Michael",
@@ -140,9 +147,8 @@ first_names_male = [
     "John Paul", "Prince", "Patrick", "Renz", "Carl", "Angelo",
     "Gabriel", "Sean", "Ethan", "Kyle", "Jomar", "Ralph",
     "James", "Reymart", "Jerico", "Von", "Ace", "Cedric",
-    "Lester", "Jude", "Miguel", "Vincent"
+    "Lester", "Jude", "Miguel", "Vincent",
 ]
-
 first_names_female = [
     "Mary Grace", "Angel", "Angela", "Joy", "Rose", "Mae",
     "Princess", "Janelle", "Nicole", "Hannah", "Patricia", "Kimberly",
@@ -150,9 +156,8 @@ first_names_female = [
     "Joanna", "Alyssa", "Andrea", "Samantha", "Kate", "Bianca",
     "Faith", "Rica", "Mika", "Trisha", "Rachelle", "Mae Ann",
     "Charlene", "Marielle", "Frances", "Danica", "Sheena", "Katrina",
-    "Ella", "Sophia", "Maria", "Angelica"
+    "Ella", "Sophia", "Maria", "Angelica",
 ]
-
 last_names = [
     "Dela Cruz", "Santos", "Reyes", "Garcia", "Mendoza",
     "Torres", "Ramos", "Flores", "Aquino", "Bautista",
@@ -163,18 +168,16 @@ last_names = [
     "Villanueva", "Domingo", "Salazar", "Mercado", "Tolentino",
     "Alvarez", "Manalo", "Panganiban", "Valdez", "David",
     "Abad", "Rosales", "Lao", "Macapagal", "Luna",
-    "Bonifacio", "Rizal", "Mabini", "Ocampo", "Cortez"
+    "Bonifacio", "Rizal", "Mabini", "Ocampo", "Cortez",
 ]
 
 course_codes = [c[0] for c in courses]
-
 students = []
 used_ids = set()
 
-random.seed(42)
+random.seed(42)  # fixed seed so data is consistent every run
 
 for i in range(1500):
-    # generate a unique YYYY-NNNN id
     year = random.randint(2021, 2025)
     while True:
         seq = random.randint(1, 9999)
@@ -184,12 +187,8 @@ for i in range(1500):
             break
 
     gender = random.choice(["Male", "Female"])
-    if gender == "Male":
-        first = random.choice(first_names_male)
-    else:
-        first = random.choice(first_names_female)
-
-    last = random.choice(last_names)
+    first  = random.choice(first_names_male if gender == "Male" else first_names_female)
+    last   = random.choice(last_names)
     year_level = random.randint(1, 4)
     coursecode = random.choice(course_codes)
 

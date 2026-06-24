@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
 {% block title %}Update Student{% endblock %}
 
@@ -10,24 +10,21 @@
   <div class="alert alert-danger">{{ message }}</div>
   {% endif %}
 
-  {# enctype is needed so the file upload works #}
   <form method="POST" enctype="multipart/form-data">
 
-    {# current photo shows at the top, click it to change #}
     <div class="mb-4 text-center">
       <img id="photo-preview"
         src="{{ student.photo_url or default_photo }}"
-        alt="Current photo"
-        width="100" height="100"
+        alt="Current photo" width="100" height="100"
         style="object-fit:cover; border-radius:50%; border:2px solid #555; cursor:pointer;"
-        onclick="document.getElementById('photo').click()"
-      >
+        onclick="document.getElementById('photo').click()">
       <div class="mt-2">
-        <label for="photo" class="form-label">
-          Upload New Photo <span class="text-muted">(leave blank to keep current)</span>
-        </label>
-        <input type="file" class="form-control" id="photo" name="photo" accept="image/*"
-               onchange="previewPhoto(event)">
+        <label for="photo" class="form-label">Upload New Photo <span class="text-muted">(leave blank to keep current)</span></label>
+        <input type="file" class="form-control" id="photo" name="photo" accept="image/*" onchange="previewPhoto(event)">
+        <input type="hidden" id="remove_photo" name="remove_photo" value="">
+        <div class="mt-2">
+          <button type="button" id="remove-photo-btn" class="btn btn-danger btn-sm">Remove current photo</button>
+        </div>
       </div>
     </div>
 
@@ -39,13 +36,15 @@
     <div class="mb-3">
       <label for="first_name" class="form-label">First Name</label>
       <input type="text" class="form-control" id="first_name" name="first_name"
-             value="{{ student.first_name }}" required>
+             value="{{ student.first_name }}"
+             pattern="[^\d]+" title="First name must not contain numbers" required>
     </div>
 
     <div class="mb-3">
       <label for="last_name" class="form-label">Last Name</label>
       <input type="text" class="form-control" id="last_name" name="last_name"
-             value="{{ student.last_name }}" required>
+             value="{{ student.last_name }}"
+             pattern="[^\d]+" title="Last name must not contain numbers" required>
     </div>
 
     <div class="mb-3">
@@ -82,15 +81,78 @@
   </form>
 
   <script>
-    // Live preview — shows the chosen image before uploading
+    const ORIGINAL_PHOTO = {{ (student.photo_url or default_photo)|tojson }};
+    const DEFAULT_PHOTO = {{ default_photo|tojson }};
+
     function previewPhoto(event) {
       const file = event.target.files[0];
+      const preview = document.getElementById('photo-preview');
+      const removeHidden = document.getElementById('remove_photo');
       if (!file) return;
       const reader = new FileReader();
       reader.onload = e => {
-        document.getElementById('photo-preview').src = e.target.result;
+        if (preview) preview.src = e.target.result;
+        if (removeHidden) removeHidden.value = '';
       };
       reader.readAsDataURL(file);
+    }
+
+    // handle remove button behavior: confirm and submit form with remove flag
+    (function() {
+      const removeBtn = document.getElementById('remove-photo-btn');
+      const removeHidden = document.getElementById('remove_photo');
+      const photoInput = document.getElementById('photo');
+      const preview = document.getElementById('photo-preview');
+      if (!removeBtn) return;
+      removeBtn.addEventListener('click', function() {
+        showRemoveModal({{ (student.first_name + ' ' + student.last_name)|tojson }});
+      });
+    })();
+
+    ['first_name', 'last_name'].forEach(function(fieldId) {
+      document.getElementById(fieldId).addEventListener('keypress', function(e) {
+        if (/\d/.test(e.key)) e.preventDefault();
+      });
+    });
+  </script>
+
+  {# Reuse the same confirmation modal UI as students/list.html for consistent look #}
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-danger">
+          <h5 class="modal-title text-danger" id="deleteModalLabel">⚠ Confirm Delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="deleteModalBody">Are you sure?</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <a id="confirmDeleteBtn" href="#" class="btn btn-danger">Yes, Delete</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showRemoveModal(name) {
+      document.getElementById('deleteModalBody').innerHTML =
+        'Are you sure you want to remove the photo of <strong>' + name + '</strong>?<br>'
+        + '<span class="text-danger">This action cannot be undone.</span>';
+      const confirmBtn = document.getElementById('confirmDeleteBtn');
+      confirmBtn.onclick = function(e) {
+        e.preventDefault();
+        const removeHidden = document.getElementById('remove_photo');
+        const photoInput = document.getElementById('photo');
+        const preview = document.getElementById('photo-preview');
+        if (removeHidden) removeHidden.value = '1';
+        if (photoInput) photoInput.value = '';
+        if (preview) preview.src = DEFAULT_PHOTO;
+        const modalEl = document.getElementById('deleteModal');
+        const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        bsModal.hide();
+        // Do NOT submit the form here — only set the remove flag and update preview.
+      };
+      new bootstrap.Modal(document.getElementById('deleteModal')).show();
     }
   </script>
 </div>

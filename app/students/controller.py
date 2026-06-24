@@ -1,12 +1,10 @@
-# this handles all the routes for students
-# add, update, delete, search students
-
 import os
 
 import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
 from flask import Blueprint, render_template, request, redirect, url_for
+from flask_login import login_required
 
 from app.models import (
     get_all_students,
@@ -18,15 +16,12 @@ from app.models import (
     search_students,
     get_all_courses,
 )
-from app.forms import validate_student_form
+from app.students.forms import validate_student_form
 
-# load .env to get cloudinary credentials
 load_dotenv(override=True)
 
 students_bp = Blueprint("students", __name__)
 
-# default photo if student has no profile picture
-# using svg so no internet needed for the placeholder
 DEFAULT_PHOTO = (
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E"
     "%3Crect width='48' height='48' rx='4' fill='%23111'/%3E"
@@ -37,24 +32,17 @@ DEFAULT_PHOTO = (
 
 
 def _upload_photo(file_storage):
-    # upload the photo to cloudinary and return the url
-    # returns None if no photo was selected
     if not file_storage or file_storage.filename == "":
         return None
-
-    # configure cloudinary using credentials from .env
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
         api_key=os.getenv("CLOUDINARY_API_KEY"),
         api_secret=os.getenv("CLOUDINARY_API_SECRET"),
         secure=True,
     )
-
-    # read file as bytes so cloudinary can process it
     file_bytes = file_storage.read()
     if not file_bytes:
         return None
-
     result = cloudinary.uploader.upload(
         file_bytes,
         folder="ssis_students",
@@ -67,21 +55,44 @@ def _upload_photo(file_storage):
 
 
 @students_bp.route("/")
+@login_required
 def index():
-    # show the list of all students
-    students = get_all_students()
-    message = request.args.get("message")
+    message  = request.args.get("message")
+    page     = request.args.get("page", 1, type=int)
+    sort     = request.args.get("sort", "id")
+    order    = request.args.get("order", "asc")
+    per_page = 10
+
+    valid_sorts = {"id", "first_name", "last_name", "gender", "year_level", "coursecode"}
+    if sort not in valid_sorts:
+        sort = "id"
+    if order not in ("asc", "desc"):
+        order = "asc"
+
+    all_students = get_all_students()
+    all_students.sort(key=lambda s: (s[sort] or ""), reverse=(order == "desc"))
+
+    total       = len(all_students)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page        = max(1, min(page, total_pages))
+    students    = all_students[(page - 1) * per_page: page * per_page]
+
     return render_template(
         "students/list.html",
         students=students,
         message=message,
         default_photo=DEFAULT_PHOTO,
+        page=page,
+        total_pages=total_pages,
+        total=total,
+        sort=sort,
+        order=order,
     )
 
 
 @students_bp.route("/addStudent", methods=["GET", "POST"])
+@login_required
 def addStudent():
-    # add a new student
     if request.method == "POST":
         try:
             data = validate_student_form(request.form)
@@ -89,7 +100,6 @@ def addStudent():
             courses = get_all_courses()
             return render_template("students/add.html", message=str(exc), courses=courses)
 
-        # make sure the student id isnt already taken
         if student_id_exists(data["id"]):
             courses = get_all_courses()
             return render_template(
@@ -98,17 +108,10 @@ def addStudent():
                 courses=courses,
             )
 
-        # upload photo if one was attached
         photo_url = _upload_photo(request.files.get("photo"))
-
         create_student(
-            data["id"],
-            data["first_name"],
-            data["last_name"],
-            data["year_level"],
-            data["gender"],
-            data["coursecode"],
-            photo_url,
+            data["id"], data["first_name"], data["last_name"],
+            data["year_level"], data["gender"], data["coursecode"], photo_url,
         )
         return redirect(url_for("students.index"))
 
@@ -117,8 +120,8 @@ def addStudent():
 
 
 @students_bp.route("/updateStudent/<string:id>", methods=["GET", "POST"])
+@login_required
 def updateStudent(id):
-    # edit an existing student
     student = get_student_by_id(id)
     if not student:
         return redirect(url_for("students.index"))
@@ -132,17 +135,16 @@ def updateStudent(id):
                 "students/update.html", message=str(exc), student=student, courses=courses
             )
 
-        # only upload if a new photo was chosen, otherwise keep the old one
         photo_url = _upload_photo(request.files.get("photo"))
+        # If no new upload:
+        # - if user checked remove_photo => clear stored photo (empty string)
+        # - otherwise keep existing photo (pass None so model won't change it)
+        if not photo_url:
+            photo_url = "" if request.form.get("remove_photo") else None
 
         update_student(
-            id,
-            data["first_name"],
-            data["last_name"],
-            data["year_level"],
-            data["gender"],
-            data["coursecode"],
-            photo_url,
+            id, data["first_name"], data["last_name"],
+            data["year_level"], data["gender"], data["coursecode"], photo_url,
         )
         return redirect(url_for("students.index"))
 
@@ -156,20 +158,44 @@ def updateStudent(id):
 
 
 @students_bp.route("/deleteStudent/<string:id>")
+@login_required
 def deleteStudent(id):
-    # delete a student
     delete_student(id)
     return redirect(url_for("students.index"))
 
 
 @students_bp.route("/search-students", methods=["GET"])
+@login_required
 def search_students_route():
-    # search for students
-    query = request.args.get("query", "").strip()
-    students = search_students(query) if query else []
+    query    = request.args.get("query", "").strip()
+    page     = request.args.get("page", 1, type=int)
+    sort     = request.args.get("sort", "id")
+    order    = request.args.get("order", "asc")
+    per_page = 10
+
+    valid_sorts = {"id", "first_name", "last_name", "gender", "year_level", "coursecode"}
+    if sort not in valid_sorts:
+        sort = "id"
+    if order not in ("asc", "desc"):
+        order = "asc"
+
+    all_results = search_students(query) if query else []
+    all_results.sort(key=lambda s: (s[sort] or ""), reverse=(order == "desc"))
+
+    total       = len(all_results)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page        = max(1, min(page, total_pages))
+    students    = all_results[(page - 1) * per_page: page * per_page]
+
     return render_template(
         "students/list.html",
         students=students,
         search_query=query,
         default_photo=DEFAULT_PHOTO,
+        page=page,
+        total_pages=total_pages,
+        total=total,
+        sort=sort,
+        order=order,
     )
+
