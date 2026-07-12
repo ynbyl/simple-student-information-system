@@ -185,7 +185,7 @@ def delete_student(student_id):
 
 
 def search_students(query):
-    # search students by any field
+    # search students by any field, including full name (first + last combined)
     conn = get_db_connection()
     cursor = conn.cursor()
     like = "%" + query.lower() + "%"
@@ -195,10 +195,12 @@ def search_students(query):
         "WHERE LOWER(id) LIKE %s "
         "   OR LOWER(first_name) LIKE %s "
         "   OR LOWER(last_name) LIKE %s "
+        "   OR LOWER(CONCAT(first_name, ' ', last_name)) LIKE %s "
+        "   OR LOWER(CONCAT(last_name, ' ', first_name)) LIKE %s "
         "   OR CAST(year_level AS CHAR) LIKE %s "
         "   OR LOWER(gender) LIKE %s "
         "   OR LOWER(coursecode) LIKE %s",
-        (like, like, like, like, like, like),
+        (like, like, like, like, like, like, like, like),
     )
     results = [
         {

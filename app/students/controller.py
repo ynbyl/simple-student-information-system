@@ -3,7 +3,7 @@ import os
 import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 
 from app.models import (
@@ -135,6 +135,7 @@ def addStudent():
             data["id"], data["first_name"], data["last_name"],
             data["year_level"], data["gender"], data["coursecode"], photo_url,
         )
+        flash(f"Student {data['first_name']} {data['last_name']} added successfully.", "success")
         return redirect(url_for("students.index"))
 
     courses = get_all_courses()
@@ -177,6 +178,7 @@ def updateStudent(id):
             id, data["first_name"], data["last_name"],
             data["year_level"], data["gender"], data["coursecode"], photo_url,
         )
+        flash(f"Student {data['first_name']} {data['last_name']} updated successfully.", "success")
         return redirect(url_for("students.index"))
 
     courses = get_all_courses()
@@ -191,7 +193,10 @@ def updateStudent(id):
 @students_bp.route("/deleteStudent/<string:id>")
 @login_required
 def deleteStudent(id):
+    student = get_student_by_id(id)
+    name = f"{student['first_name']} {student['last_name']}" if student else id
     delete_student(id)
+    flash(f"Student {name} deleted successfully.", "success")
     return redirect(url_for("students.index"))
 
 

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 
 from app.models import (
@@ -71,6 +71,7 @@ def addCourse():
             )
 
         create_course(data["coursecode"], data["coursename"], data["collegecode"])
+        flash(f"Course {data['coursecode']} — {data['coursename']} added successfully.", "success")
         return redirect(url_for("courses.listCourses"))
 
     colleges = get_all_colleges()
@@ -94,6 +95,7 @@ def updateCourse(coursecode):
             )
 
         update_course(coursecode, data["coursename"], data["collegecode"])
+        flash(f"Course {coursecode} updated successfully.", "success")
         return redirect(url_for("courses.listCourses"))
 
     colleges = get_all_colleges()
@@ -109,6 +111,7 @@ def deleteCourse(coursecode):
             message=f"Cannot delete course '{coursecode}' — there are students enrolled in it. Remove or reassign them first."
         ))
     delete_course(coursecode)
+    flash(f"Course {coursecode} deleted successfully.", "success")
     return redirect(url_for("courses.listCourses"))
 
 

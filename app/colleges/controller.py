@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 
 from app.models import (
@@ -67,6 +67,7 @@ def addCollege():
             )
 
         create_college(data["collegecode"], data["collegename"])
+        flash(f"College {data['collegecode']} — {data['collegename']} added successfully.", "success")
         return redirect(url_for("colleges.listColleges"))
 
     return render_template("colleges/add.html")
@@ -88,6 +89,7 @@ def updateCollege(collegecode):
             )
 
         update_college(collegecode, data["collegename"])
+        flash(f"College {collegecode} updated successfully.", "success")
         return redirect(url_for("colleges.listColleges"))
 
     return render_template("colleges/update.html", college=college)
@@ -102,6 +104,7 @@ def deleteCollege(collegecode):
             message=f"Cannot delete college '{collegecode}' — it still has courses assigned to it. Remove or reassign those courses first."
         ))
     delete_college(collegecode)
+    flash(f"College {collegecode} deleted successfully.", "success")
     return redirect(url_for("colleges.listColleges"))
 
 

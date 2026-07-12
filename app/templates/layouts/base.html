@@ -42,6 +42,33 @@
     {% block content %}{% endblock %}
   </div>
 
+  {# ── Success toast — bottom-center, auto-dismisses after 1 second ── #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    {% if category == 'success' %}
+    <div class="position-fixed bottom-0 start-50 translate-middle-x mb-4" style="z-index:9999;">
+      <div id="successToast" class="toast align-items-center text-bg-success border-0 show" role="alert">
+        <div class="d-flex">
+          <div class="toast-body fw-semibold">
+            ✓ {{ message }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      setTimeout(function () {
+        var el = document.getElementById('successToast');
+        if (el) {
+          el.classList.remove('show');
+          el.classList.add('hide');
+          setTimeout(function() { if (el.parentElement) el.parentElement.remove(); }, 300);
+        }
+      }, 1000);
+    </script>
+    {% endif %}
+    {% endfor %}
+  {% endwith %}
+
   <!-- bootstrap js needed for the delete confirmation modal to work -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
