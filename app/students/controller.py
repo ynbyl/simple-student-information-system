@@ -31,18 +31,34 @@ DEFAULT_PHOTO = (
 )
 
 
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+MAX_PHOTO_BYTES    = 5 * 1024 * 1024  # 5 MB
+
+
 def _upload_photo(file_storage):
     if not file_storage or file_storage.filename == "":
         return None
+
+    # validate file extension
+    ext = file_storage.filename.rsplit(".", 1)[-1].lower() if "." in file_storage.filename else ""
+    if ext not in ALLOWED_EXTENSIONS:
+        raise ValueError(f"Invalid file type '.{ext}'. Allowed: JPG, PNG, WEBP, GIF.")
+
+    file_bytes = file_storage.read()
+    if not file_bytes:
+        return None
+
+    # validate file size
+    if len(file_bytes) > MAX_PHOTO_BYTES:
+        raise ValueError("Photo must be 8 MB or smaller.")
+
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
         api_key=os.getenv("CLOUDINARY_API_KEY"),
         api_secret=os.getenv("CLOUDINARY_API_SECRET"),
         secure=True,
     )
-    file_bytes = file_storage.read()
-    if not file_bytes:
-        return None
+
     result = cloudinary.uploader.upload(
         file_bytes,
         folder="ssis_students",
@@ -108,7 +124,13 @@ def addStudent():
                 courses=courses,
             )
 
-        photo_url = _upload_photo(request.files.get("photo"))
+        photo_url = None
+        try:
+            photo_url = _upload_photo(request.files.get("photo"))
+        except ValueError as exc:
+            courses = get_all_courses()
+            return render_template("students/add.html", message=str(exc), courses=courses)
+
         create_student(
             data["id"], data["first_name"], data["last_name"],
             data["year_level"], data["gender"], data["coursecode"], photo_url,
@@ -135,10 +157,19 @@ def updateStudent(id):
                 "students/update.html", message=str(exc), student=student, courses=courses
             )
 
-        photo_url = _upload_photo(request.files.get("photo"))
-        # If no new upload:
-        # - if user checked remove_photo => clear stored photo (empty string)
-        # - otherwise keep existing photo (pass None so model won't change it)
+        photo_url = None
+        try:
+            photo_url = _upload_photo(request.files.get("photo"))
+        except ValueError as exc:
+            courses = get_all_courses()
+            return render_template(
+                "students/update.html", message=str(exc), student=student, courses=courses,
+                default_photo=DEFAULT_PHOTO,
+            )
+
+        # if no new upload:
+        # - remove_photo flag set => clear to NULL
+        # - otherwise keep existing (pass None so model won't touch it)
         if not photo_url:
             photo_url = "" if request.form.get("remove_photo") else None
 

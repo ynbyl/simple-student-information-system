@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from flask import Flask
 from flask_login import LoginManager
@@ -16,8 +17,12 @@ load_dotenv(override=True)
 def create_app():
     app = Flask(__name__, template_folder="templates")
 
+    # use a fixed secret key from .env so sessions survive debug reloads
     app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
     app.config["DEBUG"]      = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+
+    # session lasts for the browser session only (closed tab = logged out)
+    app.config["SESSION_COOKIE_PERMANENT"] = False
 
     # init extensions
     bcrypt.init_app(app)
