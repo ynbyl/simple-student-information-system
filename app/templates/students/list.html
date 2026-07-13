@@ -17,14 +17,44 @@
 </div>
 <hr>
 
-<div class="container mb-3">
-  <form action="{{ url_for('students.search_students_route') }}" method="GET" class="input-group"
-        onsubmit="if(!this.querySelector('input[name=query]').value.trim()){window.location='{{ url_for('students.index') }}';return false;}">
-    <input type="text" class="form-control" name="query"
-           placeholder="Search students…" value="{{ search_query or '' }}" aria-label="Search students">
-    <button class="btn btn-outline-secondary" type="submit">Search</button>
-  </form>
-</div>
+<form action="{{ url_for('students.search_students_route') }}" method="GET" id="filterForm"
+      onsubmit="if(!this.querySelector('input[name=query]').value.trim()&&!this.querySelector('select[name=f_course]').value&&!this.querySelector('select[name=f_year]').value&&!this.querySelector('select[name=f_gender]').value){window.location='{{ url_for('students.index') }}';return false;}">
+
+  <input type="hidden" name="sort" value="{{ sort }}">
+  <input type="hidden" name="order" value="{{ order }}">
+
+  {# ── Search bar left, filters right, all in one row ── #}
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="input-group" style="max-width: 320px;">
+      <input type="text" class="form-control" name="query"
+             placeholder="Search students…" value="{{ search_query or '' }}" aria-label="Search students">
+      <button class="btn btn-outline-secondary" type="submit">Search</button>
+    </div>
+
+    <select class="form-select" name="f_gender" style="max-width:130px;" onchange="document.getElementById('filterForm').submit()">
+      <option value="">All Genders</option>
+      <option value="Male"   {% if f_gender == 'Male'   %}selected{% endif %}>Male</option>
+      <option value="Female" {% if f_gender == 'Female' %}selected{% endif %}>Female</option>
+    </select>
+
+    <select class="form-select" name="f_year" style="max-width:120px;" onchange="document.getElementById('filterForm').submit()">
+      <option value="">All Years</option>
+      {% for y in [1,2,3,4] %}
+      <option value="{{ y }}" {% if f_year == y|string %}selected{% endif %}>Year {{ y }}</option>
+      {% endfor %}
+    </select>
+
+    <select class="form-select" name="f_course" style="max-width:160px;" onchange="document.getElementById('filterForm').submit()">
+      <option value="">All Courses</option>
+      {% for c in all_courses %}
+      <option value="{{ c.coursecode }}" {% if f_course == c.coursecode %}selected{% endif %}>{{ c.coursecode }}</option>
+      {% endfor %}
+    </select>
+
+    {% if f_course or f_year or f_gender or search_query %}
+    <a href="{{ url_for('students.index') }}" class="btn btn-outline-danger">Clear</a>
+    {% endif %}
+  </div>
 
 <table class="table table-hover align-middle">
   <thead>
@@ -34,7 +64,7 @@
       {% for col_key, col_label in cols %}
       {% set next_order = 'desc' if (sort == col_key and order == 'asc') else 'asc' %}
       <th scope="col">
-        <a href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ col_key }}&order={{ next_order }}&page=1"
+        <a href="?{% if search_query %}query={{ search_query }}&{% endif %}{% if f_course %}f_course={{ f_course }}&{% endif %}{% if f_year %}f_year={{ f_year }}&{% endif %}{% if f_gender %}f_gender={{ f_gender }}&{% endif %}sort={{ col_key }}&order={{ next_order }}&page=1"
            class="text-decoration-none text-reset d-flex align-items-center gap-1">
           {{ col_label }}
           {% if sort == col_key %}
@@ -74,17 +104,20 @@
     {% endfor %}
   </tbody>
 </table>
+</form>
+
+{% set base_params %}{% if search_query %}query={{ search_query }}&{% endif %}{% if f_course %}f_course={{ f_course }}&{% endif %}{% if f_year %}f_year={{ f_year }}&{% endif %}{% if f_gender %}f_gender={{ f_gender }}&{% endif %}sort={{ sort }}&order={{ order }}{% endset %}
 
 {# ── Pagination ───────────────────────────────────────────────────────────── #}
 {% if total_pages > 1 %}
 <nav aria-label="Student list pagination">
   <ul class="pagination justify-content-center flex-wrap">
     <li class="page-item {% if page == 1 %}disabled{% endif %}">
-      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page - 1 }}">Previous</a>
+      <a class="page-link" href="?{{ base_params }}&page={{ page - 1 }}">Previous</a>
     </li>
     {% for p in range(1, [4, total_pages + 1]|min) %}
     <li class="page-item {% if p == page %}active{% endif %}">
-      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+      <a class="page-link" href="?{{ base_params }}&page={{ p }}">{{ p }}</a>
     </li>
     {% endfor %}
     {% if page > 6 %}
@@ -92,7 +125,7 @@
     {% endif %}
     {% for p in range([page - 2, 4]|max, [page + 3, total_pages - 2]|min) %}
     <li class="page-item {% if p == page %}active{% endif %}">
-      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+      <a class="page-link" href="?{{ base_params }}&page={{ p }}">{{ p }}</a>
     </li>
     {% endfor %}
     {% if page < total_pages - 5 %}
@@ -100,11 +133,11 @@
     {% endif %}
     {% for p in range([total_pages - 2, 4]|max, total_pages + 1) %}
     <li class="page-item {% if p == page %}active{% endif %}">
-      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ p }}">{{ p }}</a>
+      <a class="page-link" href="?{{ base_params }}&page={{ p }}">{{ p }}</a>
     </li>
     {% endfor %}
     <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-      <a class="page-link" href="?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page={{ page + 1 }}">Next</a>
+      <a class="page-link" href="?{{ base_params }}&page={{ page + 1 }}">Next</a>
     </li>
   </ul>
 </nav>
@@ -112,7 +145,7 @@
   <span class="text-muted small">Go to page:</span>
   <input type="number" id="gotoPageStudents" class="form-control form-control-sm" min="1" max="{{ total_pages }}" style="width:70px;" placeholder="{{ page }}">
   <button class="btn btn-sm btn-outline-secondary"
-    onclick="(function(){var p=parseInt(document.getElementById('gotoPageStudents').value);if(p>=1&&p<={{ total_pages }}){window.location='?{% if search_query %}query={{ search_query }}&{% endif %}sort={{ sort }}&order={{ order }}&page='+p;}})()">Go</button>
+    onclick="(function(){var p=parseInt(document.getElementById('gotoPageStudents').value);if(p>=1&&p<={{ total_pages }}){window.location='?{{ base_params }}&page='+p;}})()">Go</button>
 </div>
 <p class="text-center text-muted small">Page {{ page }} of {{ total_pages }} ({{ total }} total students)</p>
 {% endif %}

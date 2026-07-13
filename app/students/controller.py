@@ -73,11 +73,14 @@ def _upload_photo(file_storage):
 @students_bp.route("/")
 @login_required
 def index():
-    message  = request.args.get("message")
-    page     = request.args.get("page", 1, type=int)
-    sort     = request.args.get("sort", "id")
-    order    = request.args.get("order", "asc")
-    per_page = 10
+    message    = request.args.get("message")
+    page       = request.args.get("page", 1, type=int)
+    sort       = request.args.get("sort", "id")
+    order      = request.args.get("order", "asc")
+    f_course   = request.args.get("f_course", "").strip()
+    f_year     = request.args.get("f_year", "").strip()
+    f_gender   = request.args.get("f_gender", "").strip()
+    per_page   = 10
 
     valid_sorts = {"id", "first_name", "last_name", "gender", "year_level", "coursecode"}
     if sort not in valid_sorts:
@@ -86,12 +89,23 @@ def index():
         order = "asc"
 
     all_students = get_all_students()
+
+    # apply filters
+    if f_course:
+        all_students = [s for s in all_students if s["coursecode"] == f_course]
+    if f_year:
+        all_students = [s for s in all_students if str(s["year_level"]) == f_year]
+    if f_gender:
+        all_students = [s for s in all_students if s["gender"] == f_gender]
+
     all_students.sort(key=lambda s: (s[sort] or ""), reverse=(order == "desc"))
 
     total       = len(all_students)
     total_pages = max(1, (total + per_page - 1) // per_page)
     page        = max(1, min(page, total_pages))
     students    = all_students[(page - 1) * per_page: page * per_page]
+
+    all_courses = get_all_courses()
 
     return render_template(
         "students/list.html",
@@ -103,6 +117,10 @@ def index():
         total=total,
         sort=sort,
         order=order,
+        f_course=f_course,
+        f_year=f_year,
+        f_gender=f_gender,
+        all_courses=all_courses,
     )
 
 
@@ -203,11 +221,14 @@ def deleteStudent(id):
 @students_bp.route("/search-students", methods=["GET"])
 @login_required
 def search_students_route():
-    query    = request.args.get("query", "").strip()
-    page     = request.args.get("page", 1, type=int)
-    sort     = request.args.get("sort", "id")
-    order    = request.args.get("order", "asc")
-    per_page = 10
+    query      = request.args.get("query", "").strip()
+    page       = request.args.get("page", 1, type=int)
+    sort       = request.args.get("sort", "id")
+    order      = request.args.get("order", "asc")
+    f_course   = request.args.get("f_course", "").strip()
+    f_year     = request.args.get("f_year", "").strip()
+    f_gender   = request.args.get("f_gender", "").strip()
+    per_page   = 10
 
     valid_sorts = {"id", "first_name", "last_name", "gender", "year_level", "coursecode"}
     if sort not in valid_sorts:
@@ -215,13 +236,24 @@ def search_students_route():
     if order not in ("asc", "desc"):
         order = "asc"
 
-    all_results = search_students(query) if query else []
+    all_results = search_students(query) if query else get_all_students()
+
+    # apply filters
+    if f_course:
+        all_results = [s for s in all_results if s["coursecode"] == f_course]
+    if f_year:
+        all_results = [s for s in all_results if str(s["year_level"]) == f_year]
+    if f_gender:
+        all_results = [s for s in all_results if s["gender"] == f_gender]
+
     all_results.sort(key=lambda s: (s[sort] or ""), reverse=(order == "desc"))
 
     total       = len(all_results)
     total_pages = max(1, (total + per_page - 1) // per_page)
     page        = max(1, min(page, total_pages))
     students    = all_results[(page - 1) * per_page: page * per_page]
+
+    all_courses = get_all_courses()
 
     return render_template(
         "students/list.html",
@@ -233,5 +265,9 @@ def search_students_route():
         total=total,
         sort=sort,
         order=order,
+        f_course=f_course,
+        f_year=f_year,
+        f_gender=f_gender,
+        all_courses=all_courses,
     )
 
