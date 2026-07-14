@@ -32,7 +32,7 @@ DEFAULT_PHOTO = (
 
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
-MAX_PHOTO_BYTES    = 5 * 1024 * 1024  # 5 MB
+MAX_PHOTO_BYTES    = 3 * 1024 * 1024  # 3 MB
 
 
 def _upload_photo(file_storage):
@@ -50,7 +50,7 @@ def _upload_photo(file_storage):
 
     # validate file size
     if len(file_bytes) > MAX_PHOTO_BYTES:
-        raise ValueError("Photo must be 8 MB or smaller.")
+        raise ValueError("Photo must be 3 MB or smaller.")
 
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
